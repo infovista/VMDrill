@@ -3,31 +3,20 @@
 VMDrill is a software module for [Apache
 Drill](https://drill.apache.org/) , an open-source SQL query engine for Big Data exploration.
 
-Requests are sent to a Drill instance using standard ANSI SQL language.
+This software module connects a Drill instance to an InfoVista© VistaMart© database.
 
-VMDrill is a software module for Drill that connects a Drill instance to
-an InfoVista© VistaMart© database.
+This document describes the VMDrill module and its installation. It does not cover Drill installation described in Drill documentation at <https://drill.apache.org/docs/install-drill/>
 
 [TOC]
 
-## Introduction
 
-### Overview
-
-This document describes the VMDrill module and its installation.
-
-It does not cover Drill installation described in Drill
-documentation at <https://drill.apache.org/docs/install-drill/>
-
-.
 
 ## VMDrill Storage Plugin Installation & Configuration
 
 ### Storage Plugin Installation
 
-The software module is a jar file (vm-drill-\<version\>.jar) that must
-be placed in the \<Apache-Drill-Installation-Directory\>/jars/3rdparty,
-**datamodel-ws-v8.jar** must be placed in the same directory.
+The software module is a jar file (vm-drill-\<version\>.jar) that must be placed in the \<Apache-Drill-Installation-Directory\>/jars/3rdparty,
+**datamodel-ws-v8.jar** that can been found in the jar directory of an InfoVista© VistaMart©  installation directory must be placed in 3rdparty directory too..
 
 VMDrill Storage Plugin Configuration
 ------------------------------------
@@ -119,8 +108,8 @@ followed by "\_data" (ex: Router\_data).
 
 A topology table has the following structure:
 
--   **tag: **
--   **name **
+-   **tag**
+-   **name**
 -   **id**
 -   **proxyOf**
 - **\<proprety name\>**
