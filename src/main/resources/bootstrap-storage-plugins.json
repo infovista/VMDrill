@@ -1,0 +1,12 @@
+{
+	"storage": {
+	 "vm" : {
+	  "type":"vm",
+	  "vistamartServer": "<vistamart host>" ,
+	  "vm_user": "user" ,
+	  "vm_password": "<password>" ,
+	  "page_size": 1000 ,
+	  "enabled": true
+	}	
+  }
+}
