@@ -132,7 +132,6 @@ public class VmRecordReader extends AbstractRecordReader {
 
 			MatrixDataInputColumn mdic;
 			MatrixDataOutputColumn outCol;
-			//	if(isStarQuery()) {
 
 			// conditions on attributes
 			if(filter!= null) {
@@ -219,14 +218,6 @@ public class VmRecordReader extends AbstractRecordReader {
 				if(!isStarQuery() && !colNames.contains(attrentry.getKey()))
 					continue;
 				addMatrixDataColumn(mdc, attrentry.getKey(), attrentry.getValue());
-				/*mdic = new MatrixDataInputColumn();
-				mdc.getInput().add(mdic);
-				mdic.setColumnName(attrentry.getKey());
-				mdic.setType(attrentry.getValue());
-				outCol = new MatrixDataOutputColumn();
-				mdc.getOutput().add(outCol);
-				outCol.setType(MatrixDataOutputColumnType.INPUT);
-				outCol.setColumnName(attrentry.getKey());*/
 			}
 			//properties
 			for(Entry<String, PropertyDesc> propEntry : propertiesDef.entrySet()) {
@@ -276,36 +267,7 @@ public class VmRecordReader extends AbstractRecordReader {
 			
 			md = service.getMatrixData(mdc);
 			fillMutator(output, md, tabledef,propertiesDef);
-			/*int index = 0;
-			TypeManager tm;
-			for(MatrixDataResponseColumn col : md.getColumns()) {
-				String columnName = col.getColumnName();
-				PropertyDesc desc = propertiesDef.get(columnName);
-				if(desc== null) {
-					//attribute
-					if(columnName.equals(VmTable.ID_COLUMN_NAME)) {
-						tm = new TypeManager.TypeLong();
-					}else
-						tm = new TypeManager.TypeVarchar();
-				}else {
-					//properties
-					if(desc.isMultValued) {
-						tm = new TypeManager.TypeVarchar();
-					}
-					else {
-						tm = TypeManager.getTypeManager(desc.type);
-					}
-				}
-				types.add(tm);
-				MajorType type = tm.getMajorType();
-				MaterializedField field = MaterializedField.create(columnName, type);
-				Class<? extends ValueVector> clazz = (Class<? extends ValueVector>)TypeHelper.getValueVectorClass(
-						tm.getMinorType(), type.getMode());
-				ValueVector vector = output.addField(field, clazz);
 
-				tm.setValueVector(index, vector);
-				index++;
-			}*/
 		}catch(Exception e) {
 			throw new ExecutionSetupException("Error on record reader setup", e);
 		}

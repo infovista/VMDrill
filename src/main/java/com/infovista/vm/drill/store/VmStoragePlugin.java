@@ -57,9 +57,7 @@ public class VmStoragePlugin extends AbstractStoragePlugin{
 		attributesInTable.put(VmTable.TAG_COLUMN_NAME, MatrixDataInputColumnType.INS_TAG);
 		attributesInTable.put(VmTable.TIMESTAMP_COLUMN_NAME, MatrixDataInputColumnType.TIMESTAMP);
 		attributesInTable.put(VmTable.PROXY_OF_COLUMN_NAME, MatrixDataInputColumnType.BASIC_TAG);
-		//attributesInDataTable.put(VmTable.NAME_COLUMN_NAME, MatrixDataInputColumnType.INS_NAME);
-		//attributesInDataTable.put(VmTable.ID_COLUMN_NAME, MatrixDataInputColumnType.INS_ID);
-		//attributesInTable.put(VmTable.PROXY_OF_COLUMN_NAME, MatrixDataInputColumnType.BASIC_TAG);
+
 		drMapName.put("15s",DisplayRate.SEC_15);
 		drMapName.put("1m",DisplayRate.MIN_1);
 		drMapName.put("5m",DisplayRate.MIN_5);

@@ -44,18 +44,7 @@ public class VmSchema extends AbstractSchema {
 		try {
 			VistaList list = plugin.getService().getVistas(vs1);
 			for(Vista vista2 : list.getData()) {
-
 				tables.add(vista2.getName());
-				//check if indicators exist for this vista
-				/*VistaCriteria vc = new VistaCriteria();
-				vc.setAncestors(true);
-				vc.setID(vista2.getID());
-				IndicatorCriteria indic = new IndicatorCriteria();
-				indic.setVistaIn(vc);
-				indic.getUsedInstances().add(new InstanceCriteria());
-				List<Indicator> listIndic = plugin.getService().getIndicators(indic).getData();
-				if(!listIndic.isEmpty())
-					tables.add(vista2.getName()+VmTable.DATA_NAME_SUFFIX);*/
 			}
 
 		} catch (DataModelException e) {
