@@ -65,7 +65,7 @@ VMDrill configuration follows the following syntax (remove characters \'
 - **vm\_user:** VistaMart© operator user name (see VistaMart© guide)
 - **vm\_password:** the password of the operator
 - **enabled**: must be set to true, if not the plugin will not be
-  visible fro
+  visible from drill.
 
 ### Make VMDrill Visible from Drill
 
