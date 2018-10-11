@@ -19,11 +19,7 @@ public class VmScanBatchCreator implements BatchCreator<VmSubScan> {
 			List<RecordBatch> children) throws ExecutionSetupException {
 		Preconditions.checkArgument(children.isEmpty());
 		List<RecordReader> readers = new LinkedList<>();
-		String tableName = subScan.getGroupScan().getTableName();
-		if(subScan.getGroupScan().getPlugin().indicatorsByDataTable.containsKey(tableName))
-			readers.add(new VmDataRecorReader(subScan.getGroupScan()));
-		else
-			readers.add(new VmRecordReader(subScan.getGroupScan()));
+		readers.add(new VmRecordReader(subScan.getGroupScan()));
 		return new ScanBatch(subScan, context, readers);
 	}
 

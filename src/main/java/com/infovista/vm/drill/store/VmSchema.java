@@ -3,7 +3,6 @@ package com.infovista.vm.drill.store;
 
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.calcite.schema.Table;
@@ -11,8 +10,6 @@ import org.apache.drill.common.exceptions.UserException;
 import org.apache.drill.exec.store.AbstractSchema;
 
 import com.infovista.vistamart.datamodel.ws.v8.DataModelException;
-import com.infovista.vistamart.datamodel.ws.v8.Indicator;
-import com.infovista.vistamart.datamodel.ws.v8.IndicatorCriteria;
 import com.infovista.vistamart.datamodel.ws.v8.InstanceCriteria;
 import com.infovista.vistamart.datamodel.ws.v8.InstanceState;
 import com.infovista.vistamart.datamodel.ws.v8.Vista;
@@ -50,7 +47,7 @@ public class VmSchema extends AbstractSchema {
 
 				tables.add(vista2.getName());
 				//check if indicators exist for this vista
-				VistaCriteria vc = new VistaCriteria();
+				/*VistaCriteria vc = new VistaCriteria();
 				vc.setAncestors(true);
 				vc.setID(vista2.getID());
 				IndicatorCriteria indic = new IndicatorCriteria();
@@ -58,7 +55,7 @@ public class VmSchema extends AbstractSchema {
 				indic.getUsedInstances().add(new InstanceCriteria());
 				List<Indicator> listIndic = plugin.getService().getIndicators(indic).getData();
 				if(!listIndic.isEmpty())
-					tables.add(vista2.getName()+VmTable.DATA_NAME_SUFFIX);
+					tables.add(vista2.getName()+VmTable.DATA_NAME_SUFFIX);*/
 			}
 
 		} catch (DataModelException e) {
@@ -73,8 +70,6 @@ public class VmSchema extends AbstractSchema {
 	public Table getTable(String name) {
 		VmScanSpec scanSpec = new VmScanSpec(name);
 		VmTable table = new VmTable(plugin, getName(), scanSpec);
-		if(name.endsWith(VmTable.DATA_NAME_SUFFIX))
-			table.SetIsData(true);
 		return table;
 	}
 

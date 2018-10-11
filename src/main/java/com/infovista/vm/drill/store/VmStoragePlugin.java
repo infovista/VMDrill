@@ -46,19 +46,20 @@ public class VmStoragePlugin extends AbstractStoragePlugin{
 	private List<String> columns = null;
 	
 	static Map<String,MatrixDataInputColumnType> attributesInTable = new LinkedHashMap<>();
-	static Map<String, MatrixDataInputColumnType> attributesInDataTable = new LinkedHashMap<>();
+	//static Map<String, MatrixDataInputColumnType> attributesInDataTable = new LinkedHashMap<>();
 	public Map<String,VmTableDef> indicatorsByDataTable = new ConcurrentHashMap<>();
 	public Map<String,Map<String,PropertyDesc>> propertiesInTables = new ConcurrentHashMap<>();
 	static String listOfDispalyRates;
 	static public Map<String, DisplayRate> drMapName = new HashMap<String,DisplayRate>();
 	static {
-		attributesInTable.put(VmTable.TAG_COLUMN_NAME, MatrixDataInputColumnType.INS_TAG);
 		attributesInTable.put(VmTable.NAME_COLUMN_NAME, MatrixDataInputColumnType.INS_NAME);
 		attributesInTable.put(VmTable.ID_COLUMN_NAME, MatrixDataInputColumnType.INS_ID);
+		attributesInTable.put(VmTable.TAG_COLUMN_NAME, MatrixDataInputColumnType.INS_TAG);
+		attributesInTable.put(VmTable.TIMESTAMP_COLUMN_NAME, MatrixDataInputColumnType.TIMESTAMP);
 		attributesInTable.put(VmTable.PROXY_OF_COLUMN_NAME, MatrixDataInputColumnType.BASIC_TAG);
-		attributesInDataTable.put(VmTable.NAME_COLUMN_NAME, MatrixDataInputColumnType.INS_NAME);
-		attributesInDataTable.put(VmTable.ID_COLUMN_NAME, MatrixDataInputColumnType.INS_ID);
-		attributesInDataTable.put(VmTable.PROXY_OF_COLUMN_NAME, MatrixDataInputColumnType.BASIC_TAG);
+		//attributesInDataTable.put(VmTable.NAME_COLUMN_NAME, MatrixDataInputColumnType.INS_NAME);
+		//attributesInDataTable.put(VmTable.ID_COLUMN_NAME, MatrixDataInputColumnType.INS_ID);
+		//attributesInTable.put(VmTable.PROXY_OF_COLUMN_NAME, MatrixDataInputColumnType.BASIC_TAG);
 		drMapName.put("15s",DisplayRate.SEC_15);
 		drMapName.put("1m",DisplayRate.MIN_1);
 		drMapName.put("5m",DisplayRate.MIN_5);
