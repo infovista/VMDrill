@@ -113,9 +113,11 @@ A table has the following structure:
 - **id**
 - **dateTime** (timestamp)
 - **proxyOf**
-- **\<proprety name\>** **.** **.** **.**
+- **\<proprety name\>**  
+**.** **.** **.**
 - **\<proprety name\>**
-- \<**indicator label**\> **.** **.** **.**
+- **\<indicator label\>**  
+**.** **.** **.**
 - \<**indicator label**\>
 
 When requesting data from a table, the field timePeriod must be set in
