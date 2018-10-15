@@ -3,9 +3,6 @@
     Installation](#vmdrill-storage-plugin-installation)
   - [VMDrill Storage Plugin
     Configuration](#vmdrill-storage-plugin-configuration)
-    - [Configuration Description](#configuration-description)
-    - [Make VMDrill Visible from
-      Drill](#make-vmdrill-visible-from-drill)
   - [VMDrill Schema Description](#vmdrill-schema-description)
     - [Tables Structure](#tables-structure)
 
@@ -18,25 +15,31 @@ Big Data exploration.
 This software module connects a Drill instance to an InfoVista&reg;
 VistaMart&reg; server.
 
-This document describes the VMDrill module and its installation. It does
-not cover Apache Drill installation described at
-[https://drill.apache.org/docs/install-drill/](https://drill.apache.org/docs/install-drill/)
+For the installation of Apache Drill, please refer to https://drill.apache.org/docs/install-drill/.
 
 ## VMDrill Storage Plugin Installation
 
 The following jar files must be placed in the \<Apache-Drill-Installation-Directory\>/jars/3rdparty directory:
-* **vm-drill-\<version\>.jar** published under https://github.com/infovista/VMDrill/releases
+* **vm-drill-\<version\>.jar** available under https://github.com/infovista/VMDrill/releases
 * **datamodel-ws-v8.jar** that can been found in the jar subdirectory of an
 InfoVista&reg; VistaMart&reg; installation
 
+If Apache Drill is already running, it must be restarted.
+
 ## VMDrill Storage Plugin Configuration
 
-### Configuration Description
+1. Open Drill web console and go to the storage tab: http://<IP address>:8047/storage
 
-Storage Plugins configuration for Drill must follow a specific Json
-format.
+   Note that some default storages are enabled by default, you can disable
+them.
 
-VMDrill configuration follows the following syntax (remove characters 
+   If no storage named vm is present, enter a name in the **New Storage
+Plugin** section (this is the schema associated to the VistaMart&reg;
+instance) and click \"Create\".
+
+2. Fill in the Configuration:
+
+VMDrill configuration follows the following JSon syntax (remove characters 
 \'\<\' and \'\>\'
 
 ```json
@@ -60,20 +63,7 @@ VMDrill configuration follows the following syntax (remove characters
 - **vm\_password:** the password of the operator
 - **enabled**: must be set to true, if not the plugin will not be
   visible from drill.
-
-### Make VMDrill Visible from Drill
-
-1. Open Drill web console and go to the storage tab.
-
-   Note that some default storages are enabled by default, you can disable
-them.
-
-   If no storage named vm is present, enter a name in the **New Storage
-Plugin** section (this is the schema associated to the VistaMart&reg;
-instance) and click \"Create\".
-
-2. Fill in the Configuration (syntax is the one described above)
-
+  
 3. Click *Create*.
 
 The new storage plugin should be visible and SQL queries can be launched
