@@ -24,11 +24,10 @@ not cover Drill installation described in Drill documentation at
 
 ## VMDrill Storage Plugin Installation
 
-The software module is a jar file (vm-drill-\<version\>.jar) that must
-be placed in the \<Apache-Drill-Installation-Directory\>/jars/3rdparty,
-**datamodel-ws-v8.jar** that can been found in the jar directory of an
-InfoVista© VistaMart© installation directory must be placed in 3rdparty
-directory too..
+The following jar files must be placed in the \<Apache-Drill-Installation-Directory\>/jars/3rdparty directory:
+* **vm-drill-\<version\>.jar** published under https://github.com/infovista/VMDrill/releases
+* **datamodel-ws-v8.jar** that can been found in the jar subdirectory of an
+InfoVista© VistaMart© installation
 
 ## VMDrill Storage Plugin Configuration
 
