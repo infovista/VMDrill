@@ -15,11 +15,11 @@ VMDrill is a software module for [Apache
 Drill](https://drill.apache.org/) , an open-source SQL query engine for
 Big Data exploration.
 
-This software module connects a Drill instance to an InfoVista©
-VistaMart© database.
+This software module connects a Drill instance to an InfoVista&reg;
+VistaMart&reg; server.
 
 This document describes the VMDrill module and its installation. It does
-not cover Drill installation described in Drill documentation at
+not cover Apache Drill installation described at
 [https://drill.apache.org/docs/install-drill/](https://drill.apache.org/docs/install-drill/)
 
 ## VMDrill Storage Plugin Installation
@@ -27,7 +27,7 @@ not cover Drill installation described in Drill documentation at
 The following jar files must be placed in the \<Apache-Drill-Installation-Directory\>/jars/3rdparty directory:
 * **vm-drill-\<version\>.jar** published under https://github.com/infovista/VMDrill/releases
 * **datamodel-ws-v8.jar** that can been found in the jar subdirectory of an
-InfoVista© VistaMart© installation
+InfoVista&reg; VistaMart&reg; installation
 
 ## VMDrill Storage Plugin Configuration
 
@@ -36,50 +36,45 @@ InfoVista© VistaMart© installation
 Storage Plugins configuration for Drill must follow a specific Json
 format.
 
-VMDrill configuration follows the following syntax (remove characters \'
-\'\< and \'\>\'
+VMDrill configuration follows the following syntax (remove characters 
+\'\<\' and \'\>\'
 
+```json
 {
-
-\"type\": \"vm\",
-
-\"vistamartServer\": \"\<VistaMart Server Host Name\>\",
-
-\"vm\_user\": \"\<VistaMart operator user\>\",
-
-\"vm\_password\": \<user password\>\",
-
-\"enabled\": true,
-
-\"pageSize\": 1000
-
+"type": "vm",
+"vistamartServer": "<VistaMart Server Host Name>",
+"vm_user": "<VistaMart operator user>",
+"vm_password": "<user password>",
+"enabled": true,
+"pageSize": 1000
 }
+ ```
 
-- **pageSize** is the number of rows in the VistaMart© response to
+- **pageSize** is the number of rows in the VistaMart&reg; response to
   each call. If more rows are needed, more requests are sent
-  transparently to the VistaMart© Server. Default is 1000.
+  transparently to the VistaMart&reg; Server. Default is 1000.
 - **Type** is required and must be \"vm\"; this is how Drill matches
   the configuration to the BI Bridge Plugin module
-- **vistamartServer:** VistaMart© server host name
-- **vm\_user:** VistaMart© operator user name (see VistaMart© guide)
+- **vistamartServer:** VistaMart&reg; server host name
+- **vm\_user:** VistaMart&reg; user name (see VistaMart&reg; guide)
 - **vm\_password:** the password of the operator
 - **enabled**: must be set to true, if not the plugin will not be
   visible from drill.
 
 ### Make VMDrill Visible from Drill
 
-Open Drill web console and go to the storage tab.
+1. Open Drill web console and go to the storage tab.
 
-Note that some default storages are enabled by default, you can disable
+   Note that some default storages are enabled by default, you can disable
 them.
 
-If no storage named vm is present, enter a name in the **New Storage
-Plugin** section (this is the schema associated to the VistaMart©
+   If no storage named vm is present, enter a name in the **New Storage
+Plugin** section (this is the schema associated to the VistaMart&reg;
 instance) and click \"Create\".
 
-Fill in the Configuration (syntax is the one described above)
+2. Fill in the Configuration (syntax is the one described above)
 
-Click *Create*.
+3. Click *Create*.
 
 The new storage plugin should be visible and SQL queries can be launched
 from Query tab.
@@ -92,14 +87,14 @@ TABLE\_SCHEMA = \'vm\'
 
 ## VMDrill Schema Description
 
-A configuration of the Storage Plugin is linked to one VistaMart©.
+A configuration of the Storage Plugin is linked to one VistaMart&reg;.
 Several configurations of the plugin can be created with different names
-to access more than one VistaMart©.
+to access more than one VistaMart&reg;.
 
 This name is in fact the schema name under with data can be requested.
 
-A VMDrill schema contains one table for each Top Vista (VistaMart©
-meaning) for which at least one instance exists in the linked VistaMart©
+A VMDrill schema contains one table for each Top Vista (VistaMart&reg;
+meaning) for which at least one instance exists in the linked VistaMart&reg;
 database. The table name is the Vista Name (e.g.: Router, 2G Cell)
 
 ### Tables Structure
@@ -107,14 +102,14 @@ database. The table name is the Vista Name (e.g.: Router, 2G Cell)
 A table has the following structure:
 
 - **timePeriod** (display Rate)
+- **dateTime** (timestamp)
 - **name**
 - **tag**
 - **id**
-- **dateTime** (timestamp)
 - **proxyOf**
-- **\<proprety name\>**  
+- **\<property name\>**  
 **.** **.** **.**
-- **\<proprety name\>**
+- **\<property name\>**
 - **\<indicator label\>**  
 **.** **.** **.**
 - \<**indicator label**\>
