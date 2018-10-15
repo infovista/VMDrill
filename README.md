@@ -30,10 +30,7 @@ If Apache Drill is already running, it must be restarted.
 
 1. Open Drill web console and go to the storage tab: http://<IP address>:8047/storage
 
-   Note that some default storages are enabled by default, you can disable
-them.
-
-   If no storage named vm is present, enter a name in the **New Storage
+   Enter a name in the **New Storage
 Plugin** section (this is the schema associated to the VistaMart&reg;
 instance) and click \"Create\".
 
@@ -81,7 +78,7 @@ A configuration of the Storage Plugin is linked to one VistaMart&reg;.
 Several configurations of the plugin can be created with different names
 to access more than one VistaMart&reg;.
 
-This name is in fact the schema name under with data can be requested.
+This name is in fact the schema name against which data can be requested.
 
 A VMDrill schema contains one table for each Top Vista (VistaMart&reg;
 meaning) for which at least one instance exists in the linked VistaMart&reg;
