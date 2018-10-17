@@ -4,14 +4,14 @@ import com.infovista.vistamart.datamodel.ws.v8.IndicatorType;
 
 public class IndicatorDesc {
 	IndicatorType type;
-	String wid;
-	public IndicatorDesc(IndicatorType type, String wid) {
+	long id;
+	public IndicatorDesc(IndicatorType type, long id) {
 		this.type = type;
-		this.wid = wid;
+		this.id = id;
 	}
 	
-	public String getWid() {
-		return wid;
+	public long getId() {
+		return id;
 	}
 
 }

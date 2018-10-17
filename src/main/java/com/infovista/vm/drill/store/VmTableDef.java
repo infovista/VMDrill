@@ -1,14 +1,14 @@
 package com.infovista.vm.drill.store;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class VmTableDef {
 	
 	public Map<String,IndicatorDesc> indicators;
 	
 		public VmTableDef() {
-		indicators = new LinkedHashMap<String, IndicatorDesc>();
+		indicators = new TreeMap<String, IndicatorDesc>(String.CASE_INSENSITIVE_ORDER);
 		
 	}
 

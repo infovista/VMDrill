@@ -5,11 +5,11 @@ import com.infovista.vistamart.datamodel.ws.v8.PropertyType;
 
 public class PropertyDesc {
 
-	String wid;
+	long id;
 	PropertyType type;
 	boolean isMultValued ;
-	public PropertyDesc(String wid, PropertyType type, boolean isMultiValued) {
-		this.wid = wid;
+	public PropertyDesc(long id, PropertyType type, boolean isMultiValued) {
+		this.id = id;
 		this.type = type;
 		this.isMultValued = isMultiValued;
 	}

@@ -51,18 +51,10 @@ public class VmDataRecorReader extends VmRecordReader {
 		VmTableDef tabledef = plugin.indicatorsByDataTable.get(tableName);
 		try {
 			mdc = new MatrixDataCriteria();
-			Date now = new Date();
+			
 			mdc.setRangeStart(0L);
 			mdc.setRangeEnd((long)pageSize);
 
-			if(groupScan.getVmScanSpec().getTimestampStart()!= -1)
-				mdc.setTimeRangeStart(newCalendarAt(groupScan.getVmScanSpec().getTimestampStart()));
-			else
-				mdc.setTimeRangeStart(newCalendarAt(now));
-			if(groupScan.getVmScanSpec().getTimestampEnd() != -1)
-				mdc.setTimeRangeEnd(newCalendarAt(groupScan.getVmScanSpec().getTimestampEnd()));
-			else
-				mdc.setTimeRangeEnd(newCalendarAt(now));
 			String displayRate = groupScan.getVmScanSpec().getDisplayRate();
 			DisplayRate dr = VmStoragePlugin.drMapName.get(displayRate);
 			if(dr != null)
@@ -71,9 +63,18 @@ public class VmDataRecorReader extends VmRecordReader {
 			{
 				throw new ExecutionSetupException("list of supported values for column  "+VmTable.DR_COLUMN_NAME+" is "+VmStoragePlugin.listOfDispalyRates);
 			}
+			if(groupScan.getVmScanSpec().getTimestampStart()!= -1)
+				mdc.setTimeRangeStart(newCalendarAt(groupScan.getVmScanSpec().getTimestampStart()));
+			else
+				mdc.setTimeRangeStart(newCalendarAtMinusOne(new Date(), dr));
+			if(groupScan.getVmScanSpec().getTimestampEnd() != -1)
+				mdc.setTimeRangeEnd(newCalendarAt(groupScan.getVmScanSpec().getTimestampEnd()));
+			else
+				mdc.setTimeRangeEnd(newCalendarAtMinusOne(new Date(), dr));		
+			
 			InstanceCriteria ic = new InstanceCriteria();
 			VistaCriteria vc = new VistaCriteria();
-			vc.setName(tableName.substring(0,tableName.indexOf(VmTable.DATA_NAME_SUFFIX)));
+			vc.setName(tableName);
 			ic.getVistas().add(vc);
 			mdc.getInstancesIn().add(ic);
 			if(filter!= null) {
@@ -113,23 +114,8 @@ public class VmDataRecorReader extends VmRecordReader {
 					}
 				}
 			}
-
-			if(isStarQuery() || colNames.contains(VmTable.NAME_COLUMN_NAME))
-			{
-				addMatrixDataColumn(mdc, VmTable.NAME_COLUMN_NAME, MatrixDataInputColumnType.INS_NAME);
-			}
-			if(isStarQuery() || colNames.contains(VmTable.ID_COLUMN_NAME))
-			{
-				addMatrixDataColumn(mdc, VmTable.ID_COLUMN_NAME, MatrixDataInputColumnType.INS_ID);
-			}
-			if(isStarQuery() || colNames.contains(VmTable.TAG_COLUMN_NAME))
-			{	
-				addMatrixDataColumn(mdc, VmTable.TAG_COLUMN_NAME, MatrixDataInputColumnType.INS_TAG);
-			}
-			//timestamp
-			if(isStarQuery() || colNames.contains(VmTable.TIMESTAMP_COLUMN_NAME)) {
-				addMatrixDataColumn(mdc, VmTable.TIMESTAMP_COLUMN_NAME, MatrixDataInputColumnType.TIMESTAMP);
-			}
+			
+			buildAttributesColumns(colNames);
 
 			buildIndicatorsColumns(colNames, tabledef, filter, ic);
 
@@ -187,6 +173,10 @@ public class VmDataRecorReader extends VmRecordReader {
 		}
 	}
 	
+	private void buildAttributesColumns(List<String> colNames) {
+		VmStoragePlugin.attributesInTable.forEach((key,value)->{if(isStarQuery() || colNames.contains(key))addMatrixDataColumn(mdc, key, value);});
+	}
+	
 	private void buildIndicatorsColumns(List<String> colNames, VmTableDef tabledef, Filter filter, InstanceCriteria ic) {
 		DataValueFilter dvf;
 		IndicatorCriteria indic = null;
@@ -194,7 +184,7 @@ public class VmDataRecorReader extends VmRecordReader {
 			if(isStarQuery() || colNames.contains(indEntry.getKey()))
 			{				
 				String passedName = indEntry.getKey();
-				addMatrixDataColumnForIndicator(mdc, indEntry.getKey(), indEntry.getValue().getWid(), MatrixDataInputColumnType.DATA_VALUE);					
+				addMatrixDataColumnForIndicator(mdc, indEntry.getKey(), indEntry.getValue().getId(), MatrixDataInputColumnType.DATA_VALUE);					
 		
 				//filter on values
 				if(filter!= null && mdc.getTimeRangeEnd().equals(mdc.getTimeRangeStart())) {
@@ -207,7 +197,7 @@ public class VmDataRecorReader extends VmRecordReader {
 							dvf = new DataValueFilter();
 							dvf.setDataType(DataValueType.VALUE);
 							indic = new IndicatorCriteria();
-							indic.setWID(indEntry.getValue().getWid());
+							indic.setID(indEntry.getValue().getId());
 							dvf.setIndicator(indic);
 							dvf.setDisplayRate(mdc.getDisplayRate());
 							dvf.setTimestamp(mdc.getTimeRangeStart());
@@ -221,14 +211,14 @@ public class VmDataRecorReader extends VmRecordReader {
 		}
 	}
 
-	private void addMatrixDataColumnForIndicator(MatrixDataCriteria mdc, String columnName, String wid, MatrixDataInputColumnType type) {
+	private void addMatrixDataColumnForIndicator(MatrixDataCriteria mdc, String columnName, long id, MatrixDataInputColumnType type) {
 
 		MatrixDataInputColumn mdic = new MatrixDataInputColumn();
 		mdc.getInput().add(mdic);
 		mdic.setColumnName(columnName);
 		mdic.setType(type);
 		IndicatorCriteria indc = new IndicatorCriteria();
-		indc.setWID(wid);
+		indc.setID(id);
 		mdic.setIndicator(indc);
 		MatrixDataOutputColumn outCol = new MatrixDataOutputColumn();
 		mdc.getOutput().add(outCol);

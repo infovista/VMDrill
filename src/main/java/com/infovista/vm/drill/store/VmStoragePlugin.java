@@ -8,11 +8,13 @@ import static javax.xml.ws.handler.MessageContext.HTTP_REQUEST_HEADERS;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Calendar;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TimeZone;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
@@ -27,35 +29,38 @@ import org.apache.drill.exec.ops.OptimizerRulesContext;
 import org.apache.drill.exec.server.DrillbitContext;
 import org.apache.drill.exec.store.AbstractStoragePlugin;
 import org.apache.drill.exec.store.SchemaConfig;
-//import org.slf4j.Logger;
-//import org.slf4j.LoggerFactory;
+
 import org.apache.drill.exec.store.StoragePluginOptimizerRule;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableSet;
+import com.infovista.vistamart.datamodel.ws.v8.ContextEntry;
 import com.infovista.vistamart.datamodel.ws.v8.DataModelServiceV80;
 import com.infovista.vistamart.datamodel.ws.v8.DataModelV80;
 import com.infovista.vistamart.datamodel.ws.v8.DisplayRate;
+import com.infovista.vistamart.datamodel.ws.v8.GlobalContext;
 import com.infovista.vistamart.datamodel.ws.v8.MatrixDataInputColumnType;
 
 public class VmStoragePlugin extends AbstractStoragePlugin{
-//	private final static Logger logger = LoggerFactory.getLogger(VmStoragePlugin.class);
 	private DataModelV80 service = null;
 	private VmStorageConfig configuration;
 	private List<String> columns = null;
 	
 	static Map<String,MatrixDataInputColumnType> attributesInTable = new LinkedHashMap<>();
-	//static Map<String, MatrixDataInputColumnType> attributesInDataTable = new LinkedHashMap<>();
+	
 	public Map<String,VmTableDef> indicatorsByDataTable = new ConcurrentHashMap<>();
 	public Map<String,Map<String,PropertyDesc>> propertiesInTables = new ConcurrentHashMap<>();
 	static String listOfDispalyRates;
 	static public Map<String, DisplayRate> drMapName = new HashMap<String,DisplayRate>();
+	static public Map<DisplayRate, DisplayRate_Data> drMapField = new HashMap<>();
+	static public Map<DisplayRate, Integer> drMapAmount = new HashMap<>();
+	private TimeZone vistaMartTimeZone;
 	static {
-		attributesInTable.put(VmTable.NAME_COLUMN_NAME, MatrixDataInputColumnType.INS_NAME);
+		attributesInTable.put(VmTable.TIMESTAMP_COLUMN_NAME, MatrixDataInputColumnType.TIMESTAMP);
 		attributesInTable.put(VmTable.ID_COLUMN_NAME, MatrixDataInputColumnType.INS_ID);
 		attributesInTable.put(VmTable.TAG_COLUMN_NAME, MatrixDataInputColumnType.INS_TAG);
-		attributesInTable.put(VmTable.TIMESTAMP_COLUMN_NAME, MatrixDataInputColumnType.TIMESTAMP);
+		attributesInTable.put(VmTable.NAME_COLUMN_NAME, MatrixDataInputColumnType.INS_NAME);
 		attributesInTable.put(VmTable.PROXY_OF_COLUMN_NAME, MatrixDataInputColumnType.BASIC_TAG);
 
 		drMapName.put("15s",DisplayRate.SEC_15);
@@ -70,6 +75,20 @@ public class VmStoragePlugin extends AbstractStoragePlugin{
 		drMapName.put("M",DisplayRate.MONTH);
 		drMapName.put("Q",DisplayRate.QUARTER);
 		drMapName.put("Y",DisplayRate.YEAR);
+		
+		drMapField.put(DisplayRate.SEC_15,new DisplayRate_Data(Calendar.SECOND,-15));
+		drMapField.put(DisplayRate.MIN_1,new DisplayRate_Data(Calendar.MINUTE,-1));
+		drMapField.put(DisplayRate.MIN_5,new DisplayRate_Data(Calendar.MINUTE,-5));
+		drMapField.put(DisplayRate.MIN_10,new DisplayRate_Data(Calendar.MINUTE,-10));
+		drMapField.put(DisplayRate.MIN_15,new DisplayRate_Data(Calendar.MINUTE,-15));
+		drMapField.put(DisplayRate.MIN_30,new DisplayRate_Data(Calendar.MINUTE,-30));
+		drMapField.put(DisplayRate.HOUR,new DisplayRate_Data(Calendar.HOUR_OF_DAY,-1));
+		drMapField.put(DisplayRate.DAY,new DisplayRate_Data(Calendar.DAY_OF_MONTH,-1));
+		drMapField.put(DisplayRate.WEEK,new DisplayRate_Data(Calendar.WEEK_OF_YEAR,-1));
+		drMapField.put(DisplayRate.MONTH,new DisplayRate_Data(Calendar.MONTH,-1));
+		drMapField.put(DisplayRate.QUARTER,new DisplayRate_Data(Calendar.MONTH,-3));
+		drMapField.put(DisplayRate.YEAR,new DisplayRate_Data(Calendar.YEAR,-1));
+		
 		listOfDispalyRates = drMapName.keySet().stream().collect(Collectors.joining(", "));
 	}
 	
@@ -121,7 +140,7 @@ public class VmStoragePlugin extends AbstractStoragePlugin{
 
 		((BindingProvider) proxy).getRequestContext().put(
 				ENDPOINT_ADDRESS_PROPERTY,
-				"http://" + configuration.getVistamartServer() + ":11080/DataModelService/v8");
+				configuration.getVistamartServer() + "/DataModelService/v8");
 
 		((BindingProvider) proxy).getRequestContext().put(USERNAME_PROPERTY,
 				configuration.getVm_user());
@@ -133,6 +152,20 @@ public class VmStoragePlugin extends AbstractStoragePlugin{
 
 		service = proxy;
 		return proxy;
+	}
+	
+	public TimeZone getVistaMartZone() throws Exception {
+		if(vistaMartTimeZone != null)
+			return vistaMartTimeZone;
+		else {
+			GlobalContext context = getService().getGlobalContext();
+			ContextEntry entry =	context.getContextEntry().stream().filter(item->item.getKey().equals("repository.globaltimezone")).findAny()                                      // If 'findAny' then return found
+                .orElse(null);
+			if(entry != null)
+				return TimeZone.getTimeZone(entry.getValue());
+			else
+				throw new Exception("Failed to retrieve VistaMart TimeZone");
+		}
 	}
 	
 	

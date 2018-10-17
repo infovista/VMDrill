@@ -37,6 +37,7 @@ import com.infovista.vistamart.datamodel.ws.v8.DataValueType;
 import com.infovista.vistamart.datamodel.ws.v8.DisplayRate;
 import com.infovista.vistamart.datamodel.ws.v8.IndicatorCriteria;
 import com.infovista.vistamart.datamodel.ws.v8.InstanceCriteria;
+import com.infovista.vistamart.datamodel.ws.v8.InstanceState;
 import com.infovista.vistamart.datamodel.ws.v8.MatrixDataCriteria;
 import com.infovista.vistamart.datamodel.ws.v8.MatrixDataInputColumn;
 import com.infovista.vistamart.datamodel.ws.v8.MatrixDataInputColumnType;
@@ -77,7 +78,7 @@ public class VmRecordReader extends AbstractRecordReader {
 		plugin = groupScan.getPlugin();
 		pageSize = ((VmStorageConfig)plugin.getConfig()).getPageSize();
 	}
-	
+
 	protected void init() {
 		allreads = false;
 		totalCount = 0;
@@ -101,20 +102,12 @@ public class VmRecordReader extends AbstractRecordReader {
 		Map<String,PropertyDesc> propertiesDef = plugin.propertiesInTables.get(tableName);
 		VmTableDef tabledef = plugin.indicatorsByDataTable.get(tableName);
 		try {
+			//build MatrixData request
 			mdc = new MatrixDataCriteria();
-			Date now = new Date();
 			mdc.setRangeStart(0L);
 			mdc.setRangeEnd((long)pageSize);
-			
-			if(groupScan.getVmScanSpec().getTimestampStart()!= -1)
-				mdc.setTimeRangeStart(newCalendarAt(groupScan.getVmScanSpec().getTimestampStart()));
-			else
-				mdc.setTimeRangeStart(newCalendarAt(now));
-			if(groupScan.getVmScanSpec().getTimestampEnd() != -1)
-				mdc.setTimeRangeEnd(newCalendarAt(groupScan.getVmScanSpec().getTimestampEnd()));
-			else
-				mdc.setTimeRangeEnd(newCalendarAt(now));
-			
+
+			//display rate
 			String displayRate = scanSpec.getDisplayRate();
 			DisplayRate dr = VmStoragePlugin.drMapName.get(displayRate);
 			if(dr != null)
@@ -123,164 +116,46 @@ public class VmRecordReader extends AbstractRecordReader {
 			{
 				throw new ExecutionSetupException("list of supported values for column  "+VmTable.DR_COLUMN_NAME+" is "+VmStoragePlugin.listOfDispalyRates);
 			}
+
+			//time range of request
+			setRequestTimeRange(dr);
+
+			//instance criteria
 			InstanceCriteria ic = new InstanceCriteria();
-//			ic.setState(InstanceState.ACTIVE);
+			ic.setState(InstanceState.ACTIVE);
 			VistaCriteria vc = new VistaCriteria();
 			vc.setName(tableName);
 			ic.getVistas().add(vc);
 			mdc.getInstancesIn().add(ic);
 
-			MatrixDataInputColumn mdic;
-			MatrixDataOutputColumn outCol;
+			buildAttributesColumns(ic, filter);
 
-			// conditions on attributes
-			if(filter!= null) {
-				List<FilterDesc> filterDescList = filter.filters.get(VmTable.TAG_COLUMN_NAME);
-				if(filterDescList != null) {
-					for(FilterDesc desc : filterDescList){
-						if(desc.compareOp.equals("equal") ) {
-							ic.setTag((String)desc.value);
-						}
-						else if(desc.compareOp.equals("like")) {
-							ic.setTagLike((String)desc.value);
-						}else if(desc.compareOp.equals("in")) {
-							@SuppressWarnings("unchecked")
-							List<String> listTag = ((ArrayList<Object>)desc.value).stream().map (i -> i.toString()).collect(Collectors.toList());
-							ic.getTagIn().addAll(listTag);
-						}
-					}
-				}
-				filterDescList = filter.filters.get(VmTable.NAME_COLUMN_NAME);
-				if(filterDescList != null) {
-					for(FilterDesc desc : filterDescList){
-						if(desc.compareOp.equals("equal") ) {
-							ic.setName((String)desc.value);
-						}
-						else if(desc.compareOp.equals("like")) {
-							ic.setNameLike((String)desc.value);
-						}
-						else if(desc.compareOp.equals("in")) {
-							@SuppressWarnings("unchecked")
-							List<String> listNames = ((ArrayList<Object>)desc.value).stream().map (i -> i.toString()).collect(Collectors.toList());
-							ic.getNameIn().addAll(listNames);
-						}
-					}
-				}
-				filterDescList = filter.filters.get(VmTable.ID_COLUMN_NAME);
-				if(filterDescList != null) {
-					for(FilterDesc desc : filterDescList){
-						if(desc.compareOp.equals("equal") ) {
-							Long value = null;
-							if(desc.value instanceof String) {
-								String valueString = (String)desc.value;
-								if(valueString.startsWith("'"))
-									valueString = valueString.substring(1,valueString.length()-1);
-								value = Long.parseLong(valueString);
-							}
-							if(desc.value instanceof Integer)
-								value = Long.valueOf(((Integer)desc.value).longValue());
-							else if(desc.value instanceof Long)
-								value = (Long)desc.value;
-							if(value != null)
-								ic.setID(value);
-							break;
-						}
-						else if(desc.compareOp.equals("in")) {
-							@SuppressWarnings("unchecked")
-							List<Long> listId = ((ArrayList<Object>)desc.value).stream().map (i -> (i instanceof Long )? (Long)i:Long.valueOf(((Integer)i).longValue()) ).collect(Collectors.toList());
-							ic.getIDIn().addAll(listId);
-						}
-					}
-				}
-				filterDescList = filter.filters.get(VmTable.PROXY_OF_COLUMN_NAME);
-				if(filterDescList != null) {
-					for(FilterDesc desc : filterDescList){
-						if(desc.compareOp.equals("equal") ) {
-							InstanceCriteria parentCriteria = new InstanceCriteria();
-							parentCriteria.setTag((String)desc.value);
-							ic.setParentIn(parentCriteria);
-							break;
-						}
-						else if(desc.compareOp.equals("in")) {
-							@SuppressWarnings("unchecked")
-							List<String> listTags = ((ArrayList<Object>)desc.value).stream().map (i -> i.toString()).collect(Collectors.toList());
-							InstanceCriteria parentCriteria = new InstanceCriteria();
-							parentCriteria.getTagIn().addAll(listTags);
-							ic.setParentIn(parentCriteria);
-							break;
-						}
-					}
-				}
 
-			}
-			//attributes
-			for(Entry<String,MatrixDataInputColumnType> attrentry : VmStoragePlugin.attributesInTable.entrySet()) {
-				if(!isStarQuery() && !colNames.contains(attrentry.getKey()))
-					continue;
-				addMatrixDataColumn(mdc, attrentry.getKey(), attrentry.getValue());
-			}
 			//properties
-			for(Entry<String, PropertyDesc> propEntry : propertiesDef.entrySet()) {
-				if(!isStarQuery() && !colNames.contains(propEntry.getKey()))
-					continue;
-				mdic = new MatrixDataInputColumn();
-				String columnName = propEntry.getKey();
-
-				mdc.getInput().add(mdic);
-				mdic.setColumnName(columnName);
-
-				PropertyDesc desc = propEntry.getValue();
-				if(desc.isMultValued)
-					mdic.setJoinMultiValuesPropValues(true);
-				mdic.setType(MatrixDataInputColumnType.PROP_VALUE_HISTORY);
-
-				PropertyCriteria pc = new PropertyCriteria();
-
-				pc.setWID(propEntry.getValue().wid);
-				mdic.setProperty(pc);
-				outCol = new MatrixDataOutputColumn();
-				mdc.getOutput().add(outCol);
-
-				outCol.setType(MatrixDataOutputColumnType.INPUT);
-
-				outCol.setColumnName(columnName);
-				if(filter != null) {
-					List<FilterDesc> filterDescList = filter.filters.get(columnName);
-					PropValueCriteria pvc;	
-					if(filterDescList != null) {
-						for(FilterDesc filtDesc : filterDescList){
-							ValueComparator valComp = buildValueComparator(filtDesc);
-							if(valComp == null)
-								continue;
-							pvc = new PropValueCriteria();
-							pvc.setValueComparator(valComp);
-			 				PropertyCriteria pcForFilter = new PropertyCriteria();
-			 				pcForFilter.setWID(propEntry.getValue().wid);
-							pvc.getPropertiesIn().add(pcForFilter);
-							ic.getPropValues().add(pvc);
-						}
-					}
-				}
-			}
+			buildPropertiesColumns(propertiesDef, filter, ic);
 			// indicators
 			buildIndicatorsColumns(colNames, tabledef, filter, ic);
-			
+
 			md = service.getMatrixData(mdc);
 			fillMutator(output, md, tabledef,propertiesDef);
 
-		}catch(Exception e) {
-			throw new ExecutionSetupException("Error on record reader setup", e);
+		}
+		catch(ExecutionSetupException e) {throw e;}
+		catch(Exception e) {
+			throw new ExecutionSetupException("Error on record reader setup:"+e.getMessage(), e);
 		}
 
 
 
 	}
-	
+
 	protected void addMatrixDataColumn(MatrixDataCriteria mdc, String columnName, MatrixDataInputColumnType type) {
+		//input
 		MatrixDataInputColumn mdic = new MatrixDataInputColumn();
 		mdc.getInput().add(mdic);
 		mdic.setColumnName(columnName);
 		mdic.setType(type);
+		//ouput
 		MatrixDataOutputColumn outCol = new MatrixDataOutputColumn();
 		mdc.getOutput().add(outCol);
 		outCol.setType(MatrixDataOutputColumnType.INPUT);
@@ -326,9 +201,13 @@ public class VmRecordReader extends AbstractRecordReader {
 
 	}
 
-	XMLGregorianCalendar newCalendarAt(Date date) throws DatatypeConfigurationException {
+	XMLGregorianCalendar newCalendarAtMinusOne(Date date, DisplayRate dr) throws Exception {
 		GregorianCalendar gCalendar = new GregorianCalendar();
 		gCalendar.setTimeInMillis(date.getTime());
+		gCalendar.setTimeZone(plugin.getVistaMartZone());
+
+		DisplayRate_Data data = VmStoragePlugin.drMapField.get(dr);
+		gCalendar.add(data.field, data.amount);
 		return  DatatypeFactory.newInstance().newXMLGregorianCalendar(gCalendar);
 
 	}
@@ -338,53 +217,53 @@ public class VmRecordReader extends AbstractRecordReader {
 		return  DatatypeFactory.newInstance().newXMLGregorianCalendar(gCalendar);
 
 	}
-	
+
 	protected ValueComparator buildValueComparator(FilterDesc  desc) {
 		ValueComparator vcomp = new ValueComparator();
 		ValueComparatorArgument vca = new ValueComparatorArgument();
 		try {
-		if(desc.value instanceof Number) {
-			vca.setValue(((Number)desc.value).doubleValue());
-		}		
-		else if(desc.value instanceof String){
-			vca.setSvalue((String)desc.value);
-		}else if(desc.value != null)
-			return null;
-		
-		if(desc.compareOp.equals("equal") ) {				
-			vcomp.setType(ValueComparatorType.EQUAL);
-			vcomp.getArguments().add(vca);
-		}
-		else
-		if(desc.compareOp.equals("not_equal")) {
-			vcomp.setType(ValueComparatorType.NOT_EQUAL);
-			vcomp.getArguments().add(vca);
-		}else if(desc.compareOp.equals("greater_than_or_equal_to")) {
-			vcomp.setType(ValueComparatorType.GREATER_OR_EQUAL);
-			vcomp.getArguments().add(vca);
-		}else if(desc.compareOp.equals("greater_than")) {
-			vcomp.setType(ValueComparatorType.GREATER);
-			vcomp.getArguments().add(vca);
-		}else if(desc.compareOp.equals("less_than_or_equal_to")) {
-			vcomp.setType(ValueComparatorType.LESS_OR_EQUAL);
-			vcomp.getArguments().add(vca);
-		}else if(desc.compareOp.equals("less_than")) {
-			vcomp.setType(ValueComparatorType.LESS);
-			vcomp.getArguments().add(vca);
-		}else if(desc.compareOp.equals("isnotnull")) {
-			vcomp.setType(ValueComparatorType.NOT_NULL);
-		}else if(desc.compareOp.equals("isnull")) {
-			vcomp.setType(ValueComparatorType.NULL);
-		}
-		else
-			return null;
+			if(desc.value instanceof Number) {
+				vca.setValue(((Number)desc.value).doubleValue());
+			}		
+			else if(desc.value instanceof String){
+				vca.setSvalue((String)desc.value);
+			}else if(desc.value != null)
+				return null;
+
+			if(desc.compareOp.equals("equal") ) {				
+				vcomp.setType(ValueComparatorType.EQUAL);
+				vcomp.getArguments().add(vca);
+			}
+			else
+				if(desc.compareOp.equals("not_equal")) {
+					vcomp.setType(ValueComparatorType.NOT_EQUAL);
+					vcomp.getArguments().add(vca);
+				}else if(desc.compareOp.equals("greater_than_or_equal_to")) {
+					vcomp.setType(ValueComparatorType.GREATER_OR_EQUAL);
+					vcomp.getArguments().add(vca);
+				}else if(desc.compareOp.equals("greater_than")) {
+					vcomp.setType(ValueComparatorType.GREATER);
+					vcomp.getArguments().add(vca);
+				}else if(desc.compareOp.equals("less_than_or_equal_to")) {
+					vcomp.setType(ValueComparatorType.LESS_OR_EQUAL);
+					vcomp.getArguments().add(vca);
+				}else if(desc.compareOp.equals("less_than")) {
+					vcomp.setType(ValueComparatorType.LESS);
+					vcomp.getArguments().add(vca);
+				}else if(desc.compareOp.equals("isnotnull")) {
+					vcomp.setType(ValueComparatorType.NOT_NULL);
+				}else if(desc.compareOp.equals("isnull")) {
+					vcomp.setType(ValueComparatorType.NULL);
+				}
+				else
+					return null;
 		}catch(Exception e) {
 			logger.error("error while building ValueComparator operation "+desc.compareOp +" value "+desc.value, e);
 			return null;
 		}
 		return vcomp;
 	}
-	
+
 	private void buildIndicatorsColumns(List<String> colNames, VmTableDef tabledef, Filter filter, InstanceCriteria ic) {
 		DataValueFilter dvf;
 		IndicatorCriteria indic = null;
@@ -392,8 +271,7 @@ public class VmRecordReader extends AbstractRecordReader {
 			if(isStarQuery() || colNames.contains(indEntry.getKey()))
 			{				
 				String passedName = indEntry.getKey();
-				addMatrixDataColumnForIndicator(mdc, indEntry.getKey(), indEntry.getValue().getWid(), MatrixDataInputColumnType.DATA_VALUE);					
-		
+				addMatrixDataColumnForIndicator(mdc, indEntry.getKey(), indEntry.getValue().getId(), MatrixDataInputColumnType.DATA_VALUE);					
 				//filter on values
 				if(filter!= null && mdc.getTimeRangeEnd().equals(mdc.getTimeRangeStart())) {
 					List<FilterDesc> filterDescList = filter.filters.get(passedName);
@@ -405,7 +283,7 @@ public class VmRecordReader extends AbstractRecordReader {
 							dvf = new DataValueFilter();
 							dvf.setDataType(DataValueType.VALUE);
 							indic = new IndicatorCriteria();
-							indic.setWID(indEntry.getValue().getWid());
+							indic.setID(indEntry.getValue().getId());
 							dvf.setIndicator(indic);
 							dvf.setDisplayRate(mdc.getDisplayRate());
 							dvf.setTimestamp(mdc.getTimeRangeStart());
@@ -418,21 +296,23 @@ public class VmRecordReader extends AbstractRecordReader {
 
 		}
 	}
-	private void addMatrixDataColumnForIndicator(MatrixDataCriteria mdc, String columnName, String wid, MatrixDataInputColumnType type) {
+
+
+	private void addMatrixDataColumnForIndicator(MatrixDataCriteria mdc, String columnName, long id, MatrixDataInputColumnType type) {
 
 		MatrixDataInputColumn mdic = new MatrixDataInputColumn();
 		mdc.getInput().add(mdic);
 		mdic.setColumnName(columnName);
 		mdic.setType(type);
 		IndicatorCriteria indc = new IndicatorCriteria();
-		indc.setWID(wid);
+		indc.setID(id);
 		mdic.setIndicator(indc);
 		MatrixDataOutputColumn outCol = new MatrixDataOutputColumn();
 		mdc.getOutput().add(outCol);
 		outCol.setType(MatrixDataOutputColumnType.INPUT);
 		outCol.setColumnName(columnName);
 	}
-	
+
 	private void fillMutator(OutputMutator output,MatrixDataResponse md,VmTableDef tabledef, Map<String,PropertyDesc> propertiesDef) throws SchemaChangeException {
 		int index = 0; //index in data response
 		TypeManager tm;
@@ -486,5 +366,176 @@ public class VmRecordReader extends AbstractRecordReader {
 			index++;
 
 		}
+	}
+
+	private void buildPropertiesColumns(Map<String,PropertyDesc> propertiesDef,Filter filter,InstanceCriteria ic) {
+
+		MatrixDataInputColumn mdic;
+		MatrixDataOutputColumn outCol;
+
+		for(Entry<String, PropertyDesc> propEntry : propertiesDef.entrySet()) {
+			if(!isStarQuery() && !colNames.contains(propEntry.getKey()))
+				continue;
+
+			//input column
+			mdic = new MatrixDataInputColumn();
+			String columnName = propEntry.getKey();
+			mdc.getInput().add(mdic);
+			mdic.setColumnName(columnName);
+			PropertyCriteria pc = new PropertyCriteria();
+			pc.setID(propEntry.getValue().id);
+			mdic.setProperty(pc);
+			PropertyDesc desc = propEntry.getValue();
+			if(desc.isMultValued)
+				//one raw, display list of values comma separated
+				mdic.setJoinMultiValuesPropValues(true);
+
+			//if no timestamp was given in sql request, ask for current vamue of ptoperty else history value
+			if(groupScan.getVmScanSpec().getTimestampEnd() == -1 &&  groupScan.getVmScanSpec().getTimestampStart() == -1) {
+
+				mdic.setType(MatrixDataInputColumnType.PROP_VALUE_CURRENT);
+			}
+			else
+				mdic.setType(MatrixDataInputColumnType.PROP_VALUE_HISTORY);
+
+			//ouput column
+			outCol = new MatrixDataOutputColumn();
+			mdc.getOutput().add(outCol);
+			outCol.setType(MatrixDataOutputColumnType.INPUT);
+			outCol.setColumnName(columnName);
+
+			filterOnProperties(ic, filter, columnName, propEntry.getValue().id);
+		}
+	}
+
+	private void filterOnProperties(InstanceCriteria ic, Filter filter, String name, long id) {
+		if(filter != null) {
+			List<FilterDesc> filterDescList = filter.filters.get(name);
+			PropValueCriteria pvc;	
+			if(filterDescList != null) {
+				for(FilterDesc filtDesc : filterDescList){
+					ValueComparator valComp = buildValueComparator(filtDesc);
+					if(valComp == null)
+						continue;
+					pvc = new PropValueCriteria();
+					pvc.setValueComparator(valComp);
+					PropertyCriteria pcForFilter = new PropertyCriteria();
+					pcForFilter.setID(id);
+					pvc.getPropertiesIn().add(pcForFilter);
+					ic.getPropValues().add(pvc);
+				}
+			}
+		}
+	}
+
+	private void buildAttributesColumns(InstanceCriteria ic, Filter filter) {
+		filterOnAttributes(ic, filter);
+		// request columns
+		for(Entry<String,MatrixDataInputColumnType> attrentry : VmStoragePlugin.attributesInTable.entrySet()) {
+			if(!isStarQuery() && !colNames.contains(attrentry.getKey()))
+				continue;
+			addMatrixDataColumn(mdc, attrentry.getKey(), attrentry.getValue());
+		}
+	}
+
+	private void filterOnAttributes(InstanceCriteria ic, Filter filter) {
+		if(filter!= null) {
+			//tag
+			List<FilterDesc> filterDescList = filter.filters.get(VmTable.TAG_COLUMN_NAME);
+			if(filterDescList != null) {
+				for(FilterDesc desc : filterDescList){
+					if(desc.compareOp.equals("equal") ) {
+						ic.setTag((String)desc.value);
+					}
+					else if(desc.compareOp.equals("like")) {
+						ic.setTagLike((String)desc.value);
+					}else if(desc.compareOp.equals("in")) {
+						@SuppressWarnings("unchecked")
+						List<String> listTag = ((ArrayList<Object>)desc.value).stream().map (i -> i.toString()).collect(Collectors.toList());
+						ic.getTagIn().addAll(listTag);
+					}
+				}
+			}
+			//name
+			filterDescList = filter.filters.get(VmTable.NAME_COLUMN_NAME);
+			if(filterDescList != null) {
+				for(FilterDesc desc : filterDescList){
+					if(desc.compareOp.equals("equal") ) {
+						ic.setName((String)desc.value);
+					}
+					else if(desc.compareOp.equals("like")) {
+						ic.setNameLike((String)desc.value);
+					}
+					else if(desc.compareOp.equals("in")) {
+						@SuppressWarnings("unchecked")
+						List<String> listNames = ((ArrayList<Object>)desc.value).stream().map (i -> i.toString()).collect(Collectors.toList());
+						ic.getNameIn().addAll(listNames);
+					}
+				}
+			}
+			//id
+			filterDescList = filter.filters.get(VmTable.ID_COLUMN_NAME);
+			if(filterDescList != null) {
+				for(FilterDesc desc : filterDescList){
+					if(desc.compareOp.equals("equal") ) {
+						Long value = null;
+						if(desc.value instanceof String) {
+							String valueString = (String)desc.value;
+							if(valueString.startsWith("'"))
+								valueString = valueString.substring(1,valueString.length()-1);
+							value = Long.parseLong(valueString);
+						}
+						if(desc.value instanceof Integer)
+							value = Long.valueOf(((Integer)desc.value).longValue());
+						else if(desc.value instanceof Long)
+							value = (Long)desc.value;
+						if(value != null)
+							ic.setID(value);
+						break;
+					}
+					else if(desc.compareOp.equals("in")) {
+						@SuppressWarnings("unchecked")
+						List<Long> listId = ((ArrayList<Object>)desc.value).stream().map (i -> (i instanceof Long )? (Long)i:Long.valueOf(((Integer)i).longValue()) ).collect(Collectors.toList());
+						ic.getIDIn().addAll(listId);
+					}
+				}
+			}
+			//proxyOf
+			filterDescList = filter.filters.get(VmTable.PROXY_OF_COLUMN_NAME);
+			if(filterDescList != null) {
+				for(FilterDesc desc : filterDescList){
+					if(desc.compareOp.equals("equal") ) {
+						InstanceCriteria parentCriteria = new InstanceCriteria();
+						parentCriteria.setTag((String)desc.value);
+						ic.setParentIn(parentCriteria);
+						break;
+					}
+					else if(desc.compareOp.equals("in")) {
+						@SuppressWarnings("unchecked")
+						List<String> listTags = ((ArrayList<Object>)desc.value).stream().map (i -> i.toString()).collect(Collectors.toList());
+						InstanceCriteria parentCriteria = new InstanceCriteria();
+						parentCriteria.getTagIn().addAll(listTags);
+						ic.setParentIn(parentCriteria);
+						break;
+					}
+				}
+			}
+
+		}
+	}
+	
+	private void setRequestTimeRange(DisplayRate dr) throws Exception{
+		XMLGregorianCalendar lastCal = null;
+		if(groupScan.getVmScanSpec().getTimestampEnd() == -1 || groupScan.getVmScanSpec().getTimestampStart() == -1) {
+			lastCal = newCalendarAtMinusOne(new Date(), dr);
+		}
+		if(groupScan.getVmScanSpec().getTimestampStart()!= -1)
+			mdc.setTimeRangeStart(newCalendarAt(groupScan.getVmScanSpec().getTimestampStart()));
+		else
+			mdc.setTimeRangeStart(lastCal);
+		if(groupScan.getVmScanSpec().getTimestampEnd() != -1)
+			mdc.setTimeRangeEnd(newCalendarAt(groupScan.getVmScanSpec().getTimestampEnd()));
+		else
+			mdc.setTimeRangeEnd(lastCal);
 	}
 }

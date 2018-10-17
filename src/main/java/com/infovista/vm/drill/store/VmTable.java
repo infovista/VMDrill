@@ -1,9 +1,9 @@
 package com.infovista.vm.drill.store;
 
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.calcite.rel.type.RelDataType;
@@ -15,6 +15,7 @@ import com.infovista.vistamart.datamodel.ws.v8.DataModelException;
 import com.infovista.vistamart.datamodel.ws.v8.DataModelV80;
 import com.infovista.vistamart.datamodel.ws.v8.Indicator;
 import com.infovista.vistamart.datamodel.ws.v8.IndicatorCriteria;
+import com.infovista.vistamart.datamodel.ws.v8.IndicatorType;
 import com.infovista.vistamart.datamodel.ws.v8.InstanceCriteria;
 import com.infovista.vistamart.datamodel.ws.v8.Property;
 import com.infovista.vistamart.datamodel.ws.v8.PropertyCriteria;
@@ -26,13 +27,13 @@ import com.infovista.vm.drill.store.TypeManager.TypeTimestamp;
 import com.infovista.vm.drill.store.TypeManager.TypeVarchar;
 
 public class VmTable extends DynamicDrillTable {
-	static final String DATA_NAME_SUFFIX = "_data";
+
 	static final String TIMESTAMP_COLUMN_NAME = "dateTime";
 	static final String DR_COLUMN_NAME = "timePeriod";
 	static final String PROXY_OF_COLUMN_NAME = "proxyOf";
-	static final String NAME_COLUMN_NAME = "name";
-	static final String TAG_COLUMN_NAME = "tag";
-	static final String ID_COLUMN_NAME = "id";
+	static final String NAME_COLUMN_NAME = "insName";
+	static final String TAG_COLUMN_NAME = "insTag";
+	static final String ID_COLUMN_NAME = "insId";
 	VmStoragePlugin myplugin ;
 	private String tableName;
 
@@ -49,7 +50,8 @@ public class VmTable extends DynamicDrillTable {
 	{
 		List<String> names = new ArrayList<>();
 		List<RelDataType> types = new ArrayList<>();
-		Map<String,PropertyDesc> cachedData = new LinkedHashMap<String, PropertyDesc>();
+		Map<String, RelDataType> resultMap = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+		Map<String,PropertyDesc> cachedData = new TreeMap<String, PropertyDesc>(String.CASE_INSENSITIVE_ORDER);
 		TreeSet<String> listNames = new TreeSet<>(String.CASE_INSENSITIVE_ORDER);
 		PropertyCriteria pc = null;
 		VistaCriteria vc = null;
@@ -61,15 +63,15 @@ public class VmTable extends DynamicDrillTable {
 		type = typeFactory.createTypeWithNullability(type,false);
 		types.add(type);
 		listNames.add(DR_COLUMN_NAME);
-		
-		// instance name
-		names.add(VmTable.NAME_COLUMN_NAME);
-		tm = new TypeVarchar();
+
+		// timesTamp
+		names.add(TIMESTAMP_COLUMN_NAME);
+		tm = new TypeTimestamp(); 
 		type =  tm.getRelDataType(typeFactory);
-		type = typeFactory.createTypeWithNullability(type,true);
+		type = typeFactory.createTypeWithNullability(type,false);
 		types.add(type);
-		listNames.add(NAME_COLUMN_NAME);
-		
+		listNames.add(TIMESTAMP_COLUMN_NAME);
+
 		// instance ID
 		names.add(VmTable.ID_COLUMN_NAME);
 		tm = new TypeLong();
@@ -86,14 +88,14 @@ public class VmTable extends DynamicDrillTable {
 		types.add(type);
 		listNames.add(TAG_COLUMN_NAME);
 		
-		// timesTamp
-		names.add(TIMESTAMP_COLUMN_NAME);
-		tm = new TypeTimestamp(); 
+		// instance name
+		names.add(VmTable.NAME_COLUMN_NAME);
+		tm = new TypeVarchar();
 		type =  tm.getRelDataType(typeFactory);
-		type = typeFactory.createTypeWithNullability(type,false);
+		type = typeFactory.createTypeWithNullability(type,true);
 		types.add(type);
-		listNames.add(TIMESTAMP_COLUMN_NAME);
-		
+		listNames.add(NAME_COLUMN_NAME);
+
 		//ProxyOf
 		names.add(VmTable.PROXY_OF_COLUMN_NAME);
 		tm = new TypeVarchar();
@@ -101,7 +103,7 @@ public class VmTable extends DynamicDrillTable {
 		type = typeFactory.createTypeWithNullability(type,true);
 		types.add(type);
 		listNames.add(PROXY_OF_COLUMN_NAME);
-		
+
 		//fetch properties
 		pc = new PropertyCriteria(); 
 		vc = new VistaCriteria();
@@ -117,17 +119,20 @@ public class VmTable extends DynamicDrillTable {
 					// name collision , add wid to the name
 					colName = colName+"_"+prop.getWID();
 				}
-				names.add(colName);
+				//names.add(colName);
 				if(prop.isMultivalued()) {
 					type =  new TypeManager.TypeVarchar().getRelDataType(typeFactory);
 				}else {
 					type = getSqlTypeFromDataModelType(typeFactory, prop.getType());
 				}
 				type = typeFactory.createTypeWithNullability(type, true);
-				types.add(type);
+				//types.add(type);
+				resultMap.put(colName, type);
 				listNames.add(colName);
-				cachedData.put(colName, new PropertyDesc(prop.getWID(),prop.getType(), prop.isMultivalued()));
+				cachedData.put(colName, new PropertyDesc(prop.getID(),prop.getType(), prop.isMultivalued()));
 			}
+			//
+			resultMap.forEach((key,value)->{names.add(key);types.add(value);});
 			myplugin.propertiesInTables.put(tableName, cachedData);
 
 		} catch (Exception e) {
@@ -135,8 +140,9 @@ public class VmTable extends DynamicDrillTable {
 			.message("Error while getting row types")
 			.build(logger);
 		}
-		
+
 		// fetch list of indicators
+		resultMap.clear();
 		vc = new VistaCriteria();
 		vc.setAncestors(true);
 		vc.setName(tableName);
@@ -149,24 +155,29 @@ public class VmTable extends DynamicDrillTable {
 			VmTableDef indicatorsDef;
 			indicatorsDef = new VmTableDef();
 			for(Indicator indicator : listIndic) {
+				if(indicator.getType().equals(IndicatorType.ALARM))
+					continue;
 				String colName = indicator.getLabel();
 				if(colName == null)
 					colName = indicator.getName();
 				colName = colName.replace("°", "").trim();
-				
+
 				if(listNames.contains(colName)) {
 					// name collision , add wid to the name
 					colName = colName+"_"+indicator.getWID();
 				}
 				listNames.add(colName);
-				indicatorsDef.getIndicators().put(colName, new IndicatorDesc(indicator.getType(),indicator.getWID()));
-				names.add(colName);
+				indicatorsDef.getIndicators().put(colName, new IndicatorDesc(indicator.getType(),indicator.getID()));
+				//names.add(colName);
 
 				RelDataType typein = TypeManager.getTypeManager(indicator.getType()).getRelDataType(typeFactory);
 				typein = typeFactory.createTypeWithNullability(typein, true);
-				types.add(typein);
+				//types.add(typein);
+				resultMap.put(colName, typein);
 			}
+			resultMap.forEach((key,value)->{names.add(key);types.add(value);});
 			myplugin.indicatorsByDataTable.put(tableName, indicatorsDef);
+			
 		} catch (DataModelException e) {
 			throw UserException.connectionError(e)
 			.message("Error while getting row types for indicators")
