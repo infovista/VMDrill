@@ -34,7 +34,7 @@ instance) and click \"Create\".
    ```json
    {
    "type": "vm",
-   "vistamartServer": "<VistaMart Server Host Name>",
+   "vistamartServer": "http://<vistamartHost>:<port>",
    "vm_user": "<VistaMart operator user>",
    "vm_password": "<user password>",
    "enabled": true,
@@ -47,7 +47,7 @@ instance) and click \"Create\".
     transparently to the VistaMart&reg; Server. Default is 1000.
    - **Type** is required and must be \"vm\"; this is how Drill matches
     the configuration to the BI Bridge Plugin module
-   - **vistamartServer:** VistaMart&reg; server host name
+   - **vistamartServer:** VistaMart&reg; server connection  url (ex: "http:// hostname:11080")
    - **vm\_user:** VistaMart&reg; user name (see VistaMart&reg; guide)
    - **vm\_password:** the password of the operator
    - **enabled**: must be set to true, if not the plugin will not be
