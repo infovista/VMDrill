@@ -48,18 +48,18 @@ instance) and click \"Create\".
    "enabled": true,
    "pageSize": 1000
    }
-    ```
+   ```
 
    - **pageSize** is the number of rows in the VistaMart&reg; response to
-  each call. If more rows are needed, more requests are sent
-  transparently to the VistaMart&reg; Server. Default is 1000.
+    each call. If more rows are needed, more requests are sent
+    transparently to the VistaMart&reg; Server. Default is 1000.
    - **Type** is required and must be \"vm\"; this is how Drill matches
-  the configuration to the BI Bridge Plugin module
+    the configuration to the BI Bridge Plugin module
    - **vistamartServer:** VistaMart&reg; server host name
    - **vm\_user:** VistaMart&reg; user name (see VistaMart&reg; guide)
    - **vm\_password:** the password of the operator
    - **enabled**: must be set to true, if not the plugin will not be
-  visible from drill.
+    visible from drill.
   
 3. Click *Create*.
 
@@ -90,9 +90,9 @@ A table has the following structure:
 
 - **timePeriod** (display Rate)
 - **dateTime** (timestamp)
-- **name**
-- **tag**
-- **id**
+- **insId**
+- **insTag**
+- **insName**
 - **proxyOf**
 - **\<property name\>**  
 **.** **.** **.**
