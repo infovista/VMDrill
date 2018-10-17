@@ -1,14 +1,6 @@
-- [VMDrill](#vmdrill)
-  - [VMDrill Storage Plugin
-    Installation](#vmdrill-storage-plugin-installation)
-  - [VMDrill Storage Plugin
-    Configuration](#vmdrill-storage-plugin-configuration)
-  - [VMDrill Schema Description](#vmdrill-schema-description)
-    - [Tables Structure](#tables-structure)
+# VMDrill Storage Plugin
 
-# VMDrill
-
-VMDrill is a software module for [Apache
+VMDrill is a storage plugin for [Apache
 Drill](https://drill.apache.org/) , an open-source SQL query engine for
 Big Data exploration.
 
@@ -17,7 +9,7 @@ VistaMart&reg; server.
 
 For the installation of Apache Drill, please refer to https://drill.apache.org/docs/install-drill/.
 
-## VMDrill Storage Plugin Installation
+## Installation
 
 The following jar files must be placed in the \<Apache-Drill-Installation-Directory\>/jars/3rdparty directory:
 * **vm-drill-\<version\>.jar** available under https://github.com/infovista/VMDrill/releases
@@ -26,7 +18,7 @@ InfoVista&reg; VistaMart&reg; installation
 
 If Apache Drill is already running, it must be restarted.
 
-## VMDrill Storage Plugin Configuration
+## Configuration
 
 1. Open Drill web console and go to the storage tab: http://<IP address>:8047/storage
 
@@ -72,7 +64,7 @@ the following request in the input field:
 SELECT TABLE\_NAME from INFORMATION\_SCHEMA.\`TABLES\` where
 TABLE\_SCHEMA = \'vm\'
 
-## VMDrill Schema Description
+## Schema Description
 
 A configuration of the Storage Plugin is linked to one VistaMart&reg;.
 Several configurations of the plugin can be created with different names
@@ -84,9 +76,7 @@ A VMDrill schema contains one table for each Top Vista (VistaMart&reg;
 meaning) for which at least one instance exists in the linked VistaMart&reg;
 database. The table name is the Vista Name (e.g.: Router, 2G Cell)
 
-### Tables Structure
-
-A table has the following structure:
+Each table has the following structure:
 
 - **timePeriod** (display Rate)
 - **dateTime** (timestamp)
