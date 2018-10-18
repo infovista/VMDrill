@@ -46,7 +46,7 @@ instance) and click \"Create\".
     each call. If more rows are needed, more requests are sent
     transparently to the VistaMart&reg; Server. Default is 1000.
    - **Type** is required and must be \"vm\"; this is how Drill matches
-    the configuration to the BI Bridge Plugin module
+    the configuration to the VmDrill module
    - **vistamartServer:** VistaMart&reg; server connection  url (ex: "http:// hostname:11080")
    - **vm\_user:** VistaMart&reg; user name (see VistaMart&reg; guide)
    - **vm\_password:** the password of the operator
